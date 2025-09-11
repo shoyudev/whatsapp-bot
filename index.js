@@ -460,6 +460,29 @@ client.on('message', async msg => {
   }
 });
 
-// Inicializa o cliente
-console.log('Iniciando WhatsApp Web Client...');
-client.initialize();
+// Inicializa o cliente com retry em caso de falha
+console.log('🚀 Iniciando WhatsApp Web Client...');
+console.log('⏳ Primeira inicialização pode demorar 1-2 minutos no Render...');
+
+// Função para inicializar com timeout
+async function initializeWithTimeout() {
+  const initTimeout = setTimeout(() => {
+    console.error('⚠️ Timeout na inicialização (2 min). Tentando novamente...');
+    client.destroy().then(() => {
+      setTimeout(() => initializeWithTimeout(), 5000);
+    });
+  }, 120000); // 2 minutos timeout
+
+  try {
+    await client.initialize();
+    clearTimeout(initTimeout);
+  } catch (error) {
+    clearTimeout(initTimeout);
+    console.error('❌ Erro na inicialização:', error.message);
+    console.log('🔄 Tentando novamente em 10 segundos...');
+    setTimeout(() => initializeWithTimeout(), 10000);
+  }
+}
+
+// Inicia o processo
+initializeWithTimeout();
