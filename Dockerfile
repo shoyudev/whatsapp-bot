@@ -40,4 +40,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3000) + '/health', (r) => {r.statusCode === 200 ? process.exit(0) : process.exit(1)})"
 
 # Comando de inicialização
+COPY check_chromium_path.sh /usr/local/bin/check_chromium_path.sh
+RUN chmod +x /usr/local/bin/check_chromium_path.sh
+RUN /usr/local/bin/check_chromium_path.sh
+
 CMD ["npm", "start"]
