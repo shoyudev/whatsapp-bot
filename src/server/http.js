@@ -1,6 +1,6 @@
 const express = require('express');
 const QRCode = require('qrcode');
-const config = require('../config');
+const config = require('./config');
 
 const createServer = (whatsappService) => {
   const app = express();
