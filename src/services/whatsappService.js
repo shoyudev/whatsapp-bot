@@ -14,10 +14,8 @@ class WhatsappService {
         ...config.puppeteer,
         executablePath: config.isRender ? config.chromiumPath : undefined
       },
-      // TRECHO CORRIGIDO (Deixa automático)
       webVersionCache: {
         type: 'none'
-        }
       }
     });
 
@@ -40,7 +38,7 @@ class WhatsappService {
     });
 
     this.client.on('message', this._handleMessage.bind(this));
-    
+
     this.client.on('disconnected', async (reason) => {
       console.log('Cliente desconectado:', reason);
       this.isReady = false;
@@ -53,7 +51,7 @@ class WhatsappService {
     if (msg.fromMe) return;
 
     const body = (msg.body || '').trim().toLowerCase();
-    
+
     if (body === '!ping') {
       await msg.reply('🏓 Pong!');
     }
@@ -76,23 +74,23 @@ class WhatsappService {
     try {
       await msg.react('⏳');
       const media = await targetMsg.downloadMedia();
-      
+
       if (!media) throw new Error('Falha no download da mídia');
 
       const stickerBase64 = await stickerService.createSticker(
-        media.data, 
-        media.mimetype, 
+        media.data,
+        media.mimetype,
         isAnimated
       );
 
       const stickerMedia = new MessageMedia('image/webp', stickerBase64);
-      
+
       await msg.reply(stickerMedia, null, {
         sendMediaAsSticker: true,
         stickerAuthor: config.sticker.author,
         stickerName: isAnimated ? 'Animated' : config.sticker.pack
       });
-      
+
       await msg.react('✅');
     } catch (error) {
       console.error('Erro ao gerar sticker:', error);
