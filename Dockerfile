@@ -1,39 +1,35 @@
 FROM node:18-slim
 
-# Define variável de ambiente para o Render
-ENV RENDER=true
-ENV NODE_ENV=production
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+# Instala dependências do sistema
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    ffmpeg \
+    chromium \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 WORKDIR /app
 
-# Instala Chromium, FFmpeg e dependências necessárias
-COPY install_chromium.sh /usr/local/bin/install_chromium.sh
-RUN chmod +x /usr/local/bin/install_chromium.sh && /usr/local/bin/install_chromium.sh && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+# Copia package.json
+COPY package.json ./
 
-# Copia package.json e package-lock.json
-COPY package*.json ./
+# ATENÇÃO: Mudamos de 'npm ci' para 'npm install' porque você editou pelo site
+# e o package-lock.json está desatualizado.
+RUN npm install --omit=dev
 
-# Instala dependências do npm
-RUN npm ci --production --omit=dev
+# Copia scripts
+COPY scripts/ ./scripts/
+RUN chmod +x ./scripts/*.sh
 
-# Copia o código da aplicação
-COPY . .
+# Copia código fonte
+COPY src/ ./src
 
-# Cria diretório para sessão do WhatsApp com permissões corretas
-RUN mkdir -p .wwebjs_auth && chown -R pptruser:pptruser /app
-
-# Expõe a porta (Render define dinamicamente via PORT)
+# Expor porta
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3000) + '/health', (r) => {r.statusCode === 200 ? process.exit(0) : process.exit(1)})"
-
-# Comando de inicialização
-COPY check_chromium_path.sh /usr/local/bin/check_chromium_path.sh
-RUN chmod +x /usr/local/bin/check_chromium_path.sh
-RUN /usr/local/bin/check_chromium_path.sh
-
-CMD ["npm", "start"]
+# Iniciar
+CMD ["node", "src/index.js"]
