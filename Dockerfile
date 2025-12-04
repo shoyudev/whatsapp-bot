@@ -32,4 +32,4 @@ RUN chmod +x *.sh || true
 EXPOSE 3000
 
 # Comando de início
-CMD ["node", "index.js"]
+CMD ["node", "src/index.js"]
