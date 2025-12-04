@@ -1,6 +1,13 @@
 FROM node:18-slim
 
-# Instala dependências do sistema
+# Variáveis de ambiente
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+    render=true
+
+WORKDIR /app
+
+# Instalação de dependências do sistema (Chrome e FFmpeg)
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -9,27 +16,20 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+# Copia arquivos de configuração primeiro
+COPY package*.json ./
 
-WORKDIR /app
-
-# Copia package.json
-COPY package.json ./
-
-# ATENÇÃO: Mudamos de 'npm ci' para 'npm install' porque você editou pelo site
-# e o package-lock.json está desatualizado.
+# Instala dependências do Node
 RUN npm install --omit=dev
 
-# Copia scripts
-COPY scripts/ ./scripts/
-RUN chmod +x ./scripts/*.sh
+# Copia o restante dos arquivos (incluindo index.js e scripts)
+COPY . .
 
-# Copia código fonte
-COPY src/ ./src
+# Garanta permissão de execução nos scripts
+RUN chmod +x *.sh || true
 
-# Expor porta
+# Expõe a porta
 EXPOSE 3000
 
-# Iniciar
-CMD ["node", "src/index.js"]
+# Comando de início
+CMD ["node", "index.js"]
